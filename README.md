@@ -26,3 +26,8 @@ Here:
 - num_splits: The number of audio files to split the video into. Defaults to 10
 - output_file: The name of the output file. Defaults to the code of the YouTube video (e.g. dQw4w9WgXcQ in the example above)
 - transcription_file: The name of the transcription file. Defaults to the output_file with a .txt extension (e.g. dQw4w9WgXcQ.txt in the example above)
+
+You can use the *batch_processor.py* app and the *youtube_vodeos.csv* file to process a batch of YouTube videos. The *youtube_videos.csv* file contains a list of YouTube videos to process, and the *batch_processor.py* app will process each video in the list.
+
+## License
+MIT
