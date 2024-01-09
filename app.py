@@ -9,12 +9,26 @@ import time
 import logging
 import glob
 from datetime import datetime
+from tenacity import retry, stop_after_attempt, wait_fixed, retry_if_exception_type
+
 
 load_dotenv()  # Load environment variables from .env file
 # Configure logging to write to app.log file
 logging.basicConfig(filename='app.log', level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 def extract_video_id(youtube_url):
+    """
+    Extracts the video ID from a YouTube URL.
+
+    Args:
+        youtube_url (str): The YouTube URL.
+
+    Returns:
+        str: The video ID.
+
+    Raises:
+        ValueError: If the video ID could not be extracted.
+    """
     # Remove unnecessary backslashes
     cleaned_url = youtube_url.replace('\\', '')
 
@@ -32,7 +46,13 @@ def extract_video_id(youtube_url):
 
 def download_youtube_video(youtube_url):
     """
-    Download the YouTube video as an audio file
+    Downloads the YouTube video as an audio file.
+
+    Args:
+        youtube_url (str): The YouTube URL.
+
+    Returns:
+        str: The filename of the downloaded video.
     """
     video_id = extract_video_id(youtube_url)
     yt = YouTube(youtube_url)
@@ -42,30 +62,48 @@ def download_youtube_video(youtube_url):
     logging.info(f"Downloaded video to {modified_filename}")
     return modified_filename
 
+
+@retry(stop=stop_after_attempt(10), wait=wait_fixed(15), retry=retry_if_exception_type(Exception))
 def transcribe_audio(audio_file):
+    """
+    Transcribes an audio file using the Azure Speech Service.
+
+    Args:
+        audio_file (str): The audio file to transcribe.
+
+    Returns:
+        dict: The transcription result.
+
+    Raises:
+        Exception: If the rate limit is exceeded after several attempts.
+    """
     headers = {'api-key': os.getenv('AZURE_KEY')}
     url = os.getenv('WHISPER_ENDPOINT')
-    # Read max_retries and retry_delay from environment variables
-    max_retries = int(os.getenv('MAX_RETRIES', 10))  # Default to 10 if not set
-    retry_delay = int(os.getenv('RETRY_DELAY', 15))  # Default to 15 seconds if not set
 
-    for attempt in range(max_retries):
-        with open(audio_file, 'rb') as audio:
-            files = {'file': audio}
-            response = requests.post(url, headers=headers, files=files)
-            logging.info(f"Transcription attempt {attempt+1}/{max_retries} on {audio_file}")    
+    with open(audio_file, 'rb') as audio:
+        files = {'file': audio}
+        response = requests.post(url, headers=headers, files=files)
+        logging.info(f"Transcription attempt on {audio_file}")    
 
-            if response.status_code == 429:
-                logging.error(f"Rate limit exceeded, retrying in {retry_delay} seconds for {audio_file}...")
-                print(f"Rate limit exceeded, retrying in {retry_delay} seconds for {audio_file}...")
-                time.sleep(retry_delay)
-            else:
-                logging.info(f"Succeeded on attempt # {attempt+1} for {audio_file}!")
-                response.raise_for_status()
-                return response.json()
-    raise Exception("Rate Limit Exceeded. Failed to transcribe after several attempts.")
+        if response.status_code == 429:
+            logging.error(f"Rate limit exceeded, retrying in 15 seconds for {audio_file}...")
+            print(f"Rate limit exceeded, retrying in 15 seconds for {audio_file}...")
+            raise Exception("Rate limit exceeded")
+        else:
+            logging.info(f"Succeeded for {audio_file}!")
+            response.raise_for_status()
+            return response.json()
+
 
 def split_audio_with_prefix(audio_file, num_splits, output_prefix=None):
+    """
+    Splits an audio file into multiple parts with a specific prefix.
+
+    Args:
+        audio_file (str): The audio file to split.
+        num_splits (int): The number of splits.
+        output_prefix (str, optional): The prefix for the output files. Defaults to None.
+    """
     if output_prefix is None:
         video_id = audio_file.split('_')[0]
         output_prefix = video_id
@@ -73,12 +111,27 @@ def split_audio_with_prefix(audio_file, num_splits, output_prefix=None):
     split_audio(audio_file, num_splits, safe_prefix)
 
 def delete_files(pattern):
+    """
+    Deletes files that match a specific pattern.
+
+    Args:
+        pattern (str): The pattern to match.
+    """
     files = glob.glob(pattern)
     for file in files:
         os.remove(file)
     print(f"Deleted files: {pattern}")
 
 def process_video(youtube_url, num_splits=10, output_file=None, transcription_file=None):
+    """
+    Processes a YouTube video by downloading it, splitting the audio, transcribing the audio, and saving the transcription.
+
+    Args:
+        youtube_url (str): The YouTube URL.
+        num_splits (int, optional): The number of splits for the audio. Defaults to 10.
+        output_file (str, optional): The output file for the transcription. Defaults to None.
+        transcription_file (str, optional): The transcription file. Defaults to None.
+    """
     start_time = datetime.now()
     cleaned_url = unquote(youtube_url.replace('\\', ''))
     logging.info(f"Downloading video from {cleaned_url}")
@@ -110,6 +163,7 @@ def process_video(youtube_url, num_splits=10, output_file=None, transcription_fi
 
     end_time = datetime.now()
     logging.info(f"Done! Runtime took {end_time - start_time}.")
+
 
 if __name__ == "__main__":
     if len(sys.argv) < 2 or len(sys.argv) > 5:

@@ -3,4 +3,4 @@ moviepy
 requests
 python-dotenv
 pydub
-limits
+tenacity
