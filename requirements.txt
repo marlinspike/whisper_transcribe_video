@@ -1,0 +1,6 @@
+pytube
+moviepy
+requests
+python-dotenv
+pydub
+limits
