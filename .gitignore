@@ -1,6 +1,7 @@
 #Custom
 app.log
 .scratch
+.DS_STORE
 
 # Created by https://www.toptal.com/developers/gitignore/api/visualstudiocode,python,venv,dotenv
 # Edit at https://www.toptal.com/developers/gitignore?templates=visualstudiocode,python,venv,dotenv

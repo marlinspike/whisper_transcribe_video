@@ -122,20 +122,25 @@ def delete_files(pattern):
         os.remove(file)
     print(f"Deleted files: {pattern}")
 
-def process_video(youtube_url, num_splits=10, output_file=None, transcription_file=None):
+def process_video(input, num_splits=5, output_file=None, transcription_file=None):
     """
-    Processes a YouTube video by downloading it, splitting the audio, transcribing the audio, and saving the transcription.
+    Processes a YouTube video or local file by downloading it (if necessary), splitting the audio, transcribing the audio, and saving the transcription.
 
     Args:
-        youtube_url (str): The YouTube URL.
-        num_splits (int, optional): The number of splits for the audio. Defaults to 10.
+        input (str): The YouTube URL or local file path.
+        num_splits (int, optional): The number of splits for the audio. Defaults to 5.
         output_file (str, optional): The output file for the transcription. Defaults to None.
         transcription_file (str, optional): The transcription file. Defaults to None.
     """
     start_time = datetime.now()
-    cleaned_url = unquote(youtube_url.replace('\\', ''))
-    logging.info(f"Downloading video from {cleaned_url}")
-    video_file = download_youtube_video(cleaned_url)
+
+    if os.path.exists(input):
+        logging.info(f"Processing local file {input}")
+        video_file = input
+    else:
+        cleaned_url = unquote(input.replace('\\', ''))
+        logging.info(f"Downloading video from {cleaned_url}")
+        video_file = download_youtube_video(cleaned_url)
 
     if output_file is None:
         video_id = video_file.split('_')[0]
@@ -149,6 +154,7 @@ def process_video(youtube_url, num_splits=10, output_file=None, transcription_fi
         safe_prefix = ''.join(c if c.isalnum() or c == '_' else '_' for c in video_id)
         split_file_name = f"{safe_prefix}_{i+1}.m4a"
         transcription = transcribe_audio(split_file_name)
+        logging.info(f"Transcribed: {split_file_name}")
         transcription_results.append(transcription['text'])
 
     with open(output_file, 'w') as file:
@@ -171,6 +177,6 @@ if __name__ == "__main__":
         sys.exit(1)
 
     process_video(sys.argv[1], 
-                  int(sys.argv[2]) if len(sys.argv) > 2 else 10, 
+                  int(sys.argv[2]) if len(sys.argv) > 2 else 5, 
                   sys.argv[3] if len(sys.argv) > 3 else None, 
                   sys.argv[4] if len(sys.argv) > 4 else None)
