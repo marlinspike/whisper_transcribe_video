@@ -8,10 +8,11 @@ This app uses Azure OpenAI Whisper to transcribe a YouTube video, or a local Aud
 
 ## Setup
 1. Clone this repo
-2. Create a virtual environment
-3. Install the requirements
-4. Use .env.example to create a .env file in the root of the project
-5. Run the app
+2. Install _ffmpeg_. If you're on a mac, you can just ```brew install ffmpeg``` 
+3. Create a virtual environment
+4. Install the requirements
+5. Use .env.example to create a .env file in the root of the project
+6. Run the app
    
 In this example, the following YouTube URL is downloaded, split into 2 audio files, and transcribed:
 ```
