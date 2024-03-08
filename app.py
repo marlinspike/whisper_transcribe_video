@@ -122,7 +122,7 @@ def delete_files(pattern):
         os.remove(file)
     print(f"Deleted files: {pattern}")
 
-def process_video(input, num_splits=5, output_file=None, transcription_file=None):
+def process_video(input:str, num_splits=5, output_file=None, transcription_file=None):
     """
     Processes a YouTube video or local file by downloading it (if necessary), splitting the audio, transcribing the audio, and saving the transcription.
 

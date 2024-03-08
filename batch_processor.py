@@ -24,13 +24,14 @@ def process_csv(csv_file):
         for row in reader:
             # Get the YouTube URL from the row
             youtube_url = row[0]
+            print (youtube_url)
             
             # Log and print the YouTube URL being processed
             logging.info(f"Processing {youtube_url}...")
             print(f"Processing {youtube_url}...")
             
             # Process the YouTube video
-            process_video(youtube_url = youtube_url)
+            process_video(input = youtube_url)
 
 # If this script is run directly (not imported), process the CSV file
 if __name__ == "__main__":
