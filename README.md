@@ -22,6 +22,34 @@ python app.py https://www.youtube.com/watch?v=dQw4w9WgXcQ 2
 ## Notes
 Parameters: <YouTube_URL OR Audio/Video_File> [<num_splits>] [<output_file>] [<transcription_file>]
 
+## How to use
+
+#### Transcribe a YouTube Video
+The app can be used to directly transacribe a YouTube Video like this:
+```python app.py https://www.youtube.com/watch?v=dQw4w9WgXcQ 2```. Here, the parameters are as follows:
+- YouTube_URL: The URL of the YouTube video to transcribe
+- num_splits: The number of audio files to split the video into. Defaults to 5
+
+#### Transcribe a Local Audio/Video File
+The app can be used to transcribe a local Audio/Video file like this:
+```python app.py /path/to/local/audio_or_video_file 2```. Here, the parameters are as follows:
+- Audio/Video_File: The path of the local Audio/Video file to transcribe
+- num_splits: The number of audio files to split the video into. Defaults to 5
+
+#### Transcribe a list of YouTube videos stored in the csv file called youtube_videos.csv
+The app can be used to transcribe a list of YouTube videos stored in the csv file called youtube_videos.csv like this:
+```python batch_processor.py```. Here, the parameters are as follows:
+- youtube_videos.csv: The csv file containing the list of YouTube videos to transcribe
+
+## How the app works
+For each YouTube video or Audio/Video file, the app does the following:
+1. Downloads the YouTube video or Audio/Video file
+2. Splits the video into the specified number of audio files
+3. Transcribes each audio file, using a back-off strategy if the transcription fails due to a timeout
+4. Writes the transcription to a file
+5. Combines the transcriptions into a single file at the end
+6. Deletes the audio/video file
+
 
 Here:
 - YouTube_URL or Audio/Video_File: The URL or Path of the YouTube video or local Audio/Video file to transcribe. If a YouTube URL is provided, it's first downloaded and then split/transcribed. If a local Audio/Video file is provided, it's split/transcribed.
