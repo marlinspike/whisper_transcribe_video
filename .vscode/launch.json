@@ -8,7 +8,7 @@
             "program": "${file}",
             "console": "integratedTerminal",
             "justMyCode": true,
-            "args": ["https://www.youtube.com/watch?v=Tuw8hxrFBH8", "10"]
+            "args": ["bj.mp3", "2"]
         }
     ]
 }
