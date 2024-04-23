@@ -14,7 +14,7 @@ parser.add_argument('--splits', type=int, default=10, help='Number of splits to 
 # Parse arguments
 args = parser.parse_args()
 
-def process_csv(csv_file):
+def process_csv(csv_file: str) -> None:
     """
     Processes a CSV file where each row contains a YouTube URL.
 

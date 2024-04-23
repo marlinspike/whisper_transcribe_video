@@ -10,6 +10,8 @@ import glob
 from datetime import datetime
 from tenacity import retry, stop_after_attempt, wait_fixed, retry_if_exception_type
 from rich.progress import Progress
+import argparse
+from typing import Optional, Callable
 
 WORKING_DIRECTORY = 'working'
 OUTPUT_DIRECTORY = 'output'
@@ -18,12 +20,12 @@ load_dotenv()  # Load environment variables from .env file
 # Configure logging to write to app.log file
 logging.basicConfig(filename='app.log', level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
-def create_directory(directory):
+def create_directory(directory: str) -> None:
     if not os.path.exists(directory):
         os.makedirs(directory)
         logging.info(f"Created directory: {directory}")
 
-def extract_video_id(youtube_url):
+def extract_video_id(youtube_url: str) -> str:
     """
     Extracts the video ID from a YouTube URL.
 
@@ -51,7 +53,7 @@ def extract_video_id(youtube_url):
         logging.error("Invalid YouTube URL. Could not extract video ID.")
         raise ValueError("Invalid YouTube URL. Could not extract video ID.")
 
-def download_youtube_video(youtube_url):
+def download_youtube_video(youtube_url: str) -> str:
     """
     Downloads the YouTube video as an audio file.
 
@@ -70,8 +72,8 @@ def download_youtube_video(youtube_url):
     return modified_filename
 
 
-@retry(stop=stop_after_attempt(10), wait=wait_fixed(15), retry=retry_if_exception_type(Exception))
-def transcribe_audio(audio_file):
+@retry(stop=stop_after_attempt(10), wait=wait_fixed(int(os.getenv('RETRY_WAIT_TIME', 15))), retry=retry_if_exception_type(Exception))
+def transcribe_audio(audio_file: str) -> dict:
     """
     Transcribes an audio file using the Azure Speech Service.
 
@@ -93,7 +95,10 @@ def transcribe_audio(audio_file):
         logging.info(f"Transcription attempt on {audio_file}")    
 
         if response.status_code == 429:
-            logging.warning(f"Rate limit exceeded, retrying in 15 seconds for {audio_file}...")
+            retry_wait_time = int(os.getenv('RETRY_WAIT_TIME', 15))
+            retry_message = f"Rate limit exceeded, retrying in {retry_wait_time} seconds for {audio_file}..."
+            logging.warning(retry_message)
+            print(retry_message)  # Print the retry message to the main screen
             raise Exception("Rate limit exceeded")
         else:
             logging.info(f"Transcription succeeded for {audio_file}")
@@ -101,7 +106,7 @@ def transcribe_audio(audio_file):
             return response.json()
 
 
-def split_audio_with_prefix(audio_file, num_splits, output_prefix=None):
+def split_audio_with_prefix(audio_file: str, num_splits: int, output_prefix: Optional[str] = None) -> None:
     """
     Splits an audio file into multiple parts with a specific prefix.
 
@@ -120,7 +125,7 @@ def split_audio_with_prefix(audio_file, num_splits, output_prefix=None):
     split_audio(audio_file, num_splits, safe_prefix, output_directory)
     logging.info(f"Split audio files saved in: {output_directory}")
 
-def delete_files(pattern):
+def delete_files(pattern: str) -> None:
     """
     Deletes files that match a specific pattern in the working directory.
 
@@ -132,7 +137,7 @@ def delete_files(pattern):
         os.remove(file)
     logging.info(f"Deleted files: {pattern} in {WORKING_DIRECTORY}")
 
-def process_video(input:str, num_splits=5, transcription_file=None, progress_callback=None):
+def process_video(input: str, num_splits: int = 5, transcription_file: Optional[str] = None, progress_callback: Optional[Callable[[str], None]] = None):
     """
     Processes a YouTube video or local file by downloading it (if necessary), splitting the audio, transcribing the audio, and saving the transcription.
 
@@ -205,18 +210,21 @@ def process_video(input:str, num_splits=5, transcription_file=None, progress_cal
 
 
 if __name__ == "__main__":
-    if len(sys.argv) < 2 or len(sys.argv) > 4:
-        print("Usage: python app.py <YouTube URL> [<num_splits>] [<transcription_file>]")
-        sys.exit(1)
+    parser = argparse.ArgumentParser(description='Process YouTube videos or local files and transcribe audio.')
+    parser.add_argument('input', metavar='INPUT', type=str, help='YouTube URL or local file path')
+    parser.add_argument('-s', '--splits', type=int, default=5, help='number of splits for the audio (default: 5)')
+    parser.add_argument('-o', '--output', type=str, help='output transcription file')
+    
+    args = parser.parse_args()
 
-    youtube_url = sys.argv[1]
-    num_splits = int(sys.argv[2]) if len(sys.argv) > 2 else 5
-    transcription_file = sys.argv[3] if len(sys.argv) > 3 else None
+    youtube_url_or_file = args.input
+    num_splits = args.splits
+    transcription_file = args.output
 
     def progress_callback(stage):
         print(f"  {stage}")
 
     try:
-        process_video(input=youtube_url, num_splits=num_splits, transcription_file=transcription_file, progress_callback=progress_callback)
+        process_video(input=youtube_url_or_file, num_splits=num_splits, transcription_file=transcription_file, progress_callback=progress_callback)
     except Exception as e:
-        logging.error(f"Error processing {youtube_url}: {str(e)}")
+        logging.error(f"Error processing {youtube_url_or_file}: {str(e)}")

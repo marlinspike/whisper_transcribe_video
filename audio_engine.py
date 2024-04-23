@@ -5,7 +5,7 @@ import os
 # Configure logging to write to app.log file
 logging.basicConfig(filename='app.log', level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
-def split_audio(audio_file, num_splits, output_prefix, output_directory):
+def split_audio(audio_file: str, num_splits: int, output_prefix: str, output_directory: str) -> None:
     """
     Splits an audio file into multiple parts.
 
