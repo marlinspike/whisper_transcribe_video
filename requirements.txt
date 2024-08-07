@@ -4,3 +4,4 @@ python-dotenv
 pydub
 tenacity
 yt_dlp
+rich
