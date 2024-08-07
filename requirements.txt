@@ -1,7 +1,6 @@
-pytube
 moviepy
 requests
 python-dotenv
 pydub
 tenacity
-rich
+yt_dlp
