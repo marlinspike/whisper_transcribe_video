@@ -5,6 +5,7 @@ app.log
 .vscode/*
 /output
 /working
+prompt.md
 
 # Created by https://www.toptal.com/developers/gitignore/api/visualstudiocode,python,venv,dotenv
 # Edit at https://www.toptal.com/developers/gitignore?templates=visualstudiocode,python,venv,dotenv
