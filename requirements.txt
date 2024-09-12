@@ -5,3 +5,4 @@ pydub
 tenacity
 yt_dlp
 rich
+pytest
