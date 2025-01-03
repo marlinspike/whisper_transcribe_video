@@ -6,3 +6,4 @@ tenacity
 yt_dlp
 rich
 pytest
+pytubefix
