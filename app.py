@@ -144,7 +144,7 @@ def split_audio(audio_file: str, num_splits: int, output_directory: str) -> List
         segment = audio[start:end]
 
         segment_filename = os.path.join(output_directory, f"{os.path.splitext(os.path.basename(audio_file))[0]}_part{i + 1}.m4a")
-        segment.export(segment_filename, format="m4a")
+        segment.export(segment_filename, format="ipod")  # Use 'ipod' for reliable m4a export
         output_files.append(segment_filename)
 
     return output_files
@@ -201,12 +201,11 @@ def process_video(input: str, num_splits: int = 5, output_file: str = None) -> N
         # Delete intermediate files
         delete_individual_files(split_files)
         if os.getenv('DELETE_AUDIO_FILES', 'false').lower() == 'true':
-            logging.info("Deleting audio files...")
             delete_individual_files([video_file])
 
     except Exception as e:
         logging.error(f"Error processing video: {str(e)}")
-        if video_file:  # Avoid referencing uninitialized variable
+        if video_file:
             file_times[video_file] = 0
     finally:
         end_time = datetime.now()
@@ -218,8 +217,9 @@ if __name__ == "__main__":
         print("Usage: python app.py <input> [num_splits] [output_file]")
         sys.exit(1)
 
-    process_video(
-        sys.argv[1],
-        int(sys.argv[2]) if len(sys.argv) > 2 else 5,
-        sys.argv[3] if len(sys.argv) > 3 else None
-    )
+    input_file_or_url = sys.argv[1]
+    num_splits = int(sys.argv[2]) if len(sys.argv) > 2 else 5
+    output_file = sys.argv[3] if len(sys.argv) > 3 else None
+
+    logging.info(f"Starting process_video with input: {input_file_or_url}, num_splits: {num_splits}, output_file: {output_file}")
+    process_video(input_file_or_url, num_splits, output_file)
